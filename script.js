@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const cartTotalSpanBottom = document.getElementById('cart-total-bottom');
     const checkoutButton = document.getElementById('checkout-button');
     const emptyCartMessage = document.getElementById('empty-cart');
+    const categoryFilter = document.getElementById('category-filter'); // Get the filter dropdown
 
     let products = loadProducts();
     let cart = loadCart();
@@ -33,24 +34,30 @@ document.addEventListener('DOMContentLoaded', () => {
         return storedCart ? JSON.parse(storedCart) : [];
     }
 
-    // Function to display products (only on user.html)
-    function displayProducts() {
+    // Function to display products (only on user.html), now with category filtering
+    function displayProducts(filterCategory = '') {
         if (!productListDiv) return; // Only run if product list exists
 
         productListDiv.innerHTML = '';
-        if (products.length === 0) {
-            productListDiv.innerHTML = '<p>No products available.</p>';
+        const filteredProducts = filterCategory
+            ? products.filter(product => product.category === filterCategory)
+            : products;
+
+        if (filteredProducts.length === 0) {
+            productListDiv.innerHTML = '<p>No products available in this category.</p>';
             return;
         }
-        products.forEach((product, index) => {
+
+        filteredProducts.forEach((product, index) => {
             const productCard = document.createElement('div');
             productCard.classList.add('product-card');
             productCard.innerHTML = `
                 <img src="${product.image}" alt="${product.name}">
                 <h3>${product.name}</h3>
+                <p class="category">Category: ${product.category.charAt(0).toUpperCase() + product.category.slice(1)}</p>
                 <p class="price">₹${product.price.toFixed(2)}</p>
                 <p class="description">${product.description}</p>
-                <button class="add-to-cart" data-product-id="${index}">Add to Cart</button>
+                <button class="add-to-cart" data-product-id="${products.indexOf(product)}">Add to Cart</button>
             `;
             productListDiv.appendChild(productCard);
         });
@@ -137,19 +144,29 @@ document.addEventListener('DOMContentLoaded', () => {
             const name = document.getElementById('product-name').value;
             const price = parseFloat(document.getElementById('product-price').value);
             const description = document.getElementById('product-description').value;
+            const category = document.getElementById('product-category').value; // Get the selected category
 
             const newProduct = {
                 image: imageUrl,
                 name: name,
                 price: price,
                 description: description,
+                category: category, // Save the category
                 id: Date.now() // Simple unique ID
             };
 
             products.push(newProduct);
             saveProducts();
             uploadForm.reset();
-            alert(`Product "${name}" uploaded successfully!`);
+            alert(`Product "${name}" in category "${category}" uploaded successfully!`);
+        });
+    }
+
+    // Event listener for the category filter (only on user.html)
+    if (categoryFilter) {
+        categoryFilter.addEventListener('change', function() {
+            const selectedCategory = this.value;
+            displayProducts(selectedCategory);
         });
     }
 
